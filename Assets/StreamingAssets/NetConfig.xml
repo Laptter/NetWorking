@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Config>
+  <RemoteIp>192.168.1.111</RemoteIp>
+  <RemotePort>8001</RemotePort>
+ 
+  <LocalIp>192.168.1.111</LocalIp>
+  <LocalPort>8001</LocalPort>
+  <AutoLocalIp>true</AutoLocalIp>
+
+  </Config>
