@@ -7,6 +7,12 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 
+
+public struct UdpState
+{
+    public UdpClient u;
+    public IPEndPoint e;
+}
 public class Server
 {
     private IPAddress ip;
@@ -16,11 +22,11 @@ public class Server
     private Socket acceptSocket;
     private bool flag = true;
 
-    public Server(string ip,int port, ProtocolType type)
+    public Server(string ip,int port,SocketType socketType, ProtocolType protocolType)
     {
         this.ip = IPAddress.Parse(ip);
         this.port = port;
-        acceptSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, type);
+        acceptSocket = new Socket(AddressFamily.InterNetwork, socketType, protocolType);
         ThreadDic = new Dictionary<string, Thread>();
         SocketDic = new Dictionary<string, Socket>();
     }
@@ -38,15 +44,24 @@ public class Server
             Debug.LogError(se);
             throw;
         }
-        acceptSocket.Listen(100);
+        
 
-       
+        Thread thread = null;
 
-        Thread t = new Thread(() => TCPReceive(call));
-        ThreadDic.Add(acceptSocket.ToString(), t);
+        if (acceptSocket.ProtocolType == ProtocolType.Tcp)
+        {
+            acceptSocket.Listen(10);
+            thread = new Thread(() => TCPReceive(call));
+        }
+        else
+        {
+            thread = new Thread(() => UdpRecive(call));
+        }
+
+        ThreadDic.Add(acceptSocket.ToString(), thread);
         SocketDic.Add(acceptSocket.ToString(), acceptSocket);
-        t.IsBackground = true;
-        t.Start();
+        thread.IsBackground = true;
+        thread.Start();
     }
 
 
@@ -56,23 +71,52 @@ public class Server
         {
             Socket client = acceptSocket.Accept();
             Debug.Log(client.RemoteEndPoint.ToString());
-            
             Thread t = new Thread(() => ReceiveMessage(client, call));
-           
             ThreadDic.Add(client.RemoteEndPoint.ToString(), t);
             SocketDic.Add(client.RemoteEndPoint.ToString(), client);
             t.IsBackground = true;
             t.Start();
-            
         }
     }
+
+
+    private void UdpRecive(Action<byte[], int> call)
+    {
+        while (true)
+        {
+            EndPoint remoteEndpoint = new IPEndPoint(IPAddress.Any, 0);
+            byte[] data = new byte[2048];
+            int length = -1;
+            try
+            {
+                Debug.Log(remoteEndpoint);
+                length = acceptSocket.ReceiveFrom(data,ref remoteEndpoint);
+            }
+            catch (SocketException se)
+            {
+                ThreadDic.Remove(acceptSocket.ToString());
+                acceptSocket.Close();
+                SocketDic.Remove(acceptSocket.ToString());
+                Debug.LogError(se);
+                break;
+            }
+            catch (Exception e)
+            {
+                Debug.Log(e);
+            }
+
+            //string message = Encoding.ASCII.GetString(data, 0, length);
+            call(data,length);
+            //Debug.Log("接收到UDP消息：" + message + " from " + remoteEndpoint);
+        }
+    }
+
 
     private void ReceiveMessage(Socket client, Action<byte[],int> call)
     {
         while (flag)
         {
-            byte[] data = new byte[1024 * 1024];
-
+            byte[] data = new byte[2048];
             int length = -1;
             try
             {
@@ -97,6 +141,29 @@ public class Server
             //string message = Encoding.ASCII.GetString(data, 0, length);
             call(data,length);
             //Debug.Log("接收到TCP消息：" + message + " from " + client.RemoteEndPoint.ToString());
+           
+            if (length == 0)
+            {
+                ReaseResources(client);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 按照客户端端口号释放线程占用的资源
+    /// </summary>
+    /// <param name="client"></param>
+    private void ReaseResources(Socket client)
+    {
+        if (client != null && client.Connected)
+        {
+            var key = client.RemoteEndPoint.ToString();
+            SocketDic.Remove(key);
+            client.Shutdown(SocketShutdown.Both);
+            client.Close();
+            Thread t = ThreadDic[key];
+            ThreadDic.Remove(key);
+            t.Abort();
         }
     }
 
@@ -105,12 +172,24 @@ public class Server
         flag = false;
         foreach (var socket in SocketDic)
         {
-            socket.Value.Close();
+            if (socket.Value != null && socket.Value.Connected)
+            {
+                socket.Value.Shutdown(SocketShutdown.Both);
+                System.Threading.Thread.Sleep(10);
+                socket.Value.Close();
+            }
         }
+
 
         foreach (var thread in ThreadDic)
         {
-            thread.Value.Abort();
+            if (thread.Value != null)
+            {
+                thread.Value.Abort();
+            }
         }
+
+        SocketDic.Clear();
+        ThreadDic.Clear();
     }
 }

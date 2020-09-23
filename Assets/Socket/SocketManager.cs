@@ -45,6 +45,7 @@ public class SocketManager : MonoBehaviour
     {
         if (bInitTcpServer)
         {
+            //over
             InitTcpServer();
         }
 
@@ -68,7 +69,7 @@ public class SocketManager : MonoBehaviour
 
     public void InitTcpServer()
     {
-        tcpServer = new Server(tcpServerIp, tcpServerPort, ProtocolType.Tcp);
+        tcpServer = new Server(tcpServerIp, tcpServerPort,  SocketType.Stream,ProtocolType.Tcp);
         tcpServer.Initialize(ReciveBytes);
     }
 
@@ -78,13 +79,13 @@ public class SocketManager : MonoBehaviour
         if (length > 0)
         {
             Array.Resize(ref bytes, length);
-            DataType data = FromByteArray<DataType>(bytes);
+            Debug.Log( System.Text.Encoding.UTF8.GetString(bytes).TrimEnd('\0'));
         }
     }
 
     public void InitUdpServer()
     {
-        udpServer = new Server(udpServerIp, udpServerPort, ProtocolType.Udp);
+        udpServer = new Server(udpServerIp, udpServerPort, SocketType.Dgram, ProtocolType.Udp);
         udpServer.Initialize(ReciveBytes);
     }
 
@@ -114,6 +115,7 @@ public class SocketManager : MonoBehaviour
         BinaryFormatter bf = new BinaryFormatter();
         using (MemoryStream ms = new MemoryStream())
         {
+            ms.Position = 0;
             bf.Serialize(ms, obj);
             return ms.ToArray();
         }
@@ -126,6 +128,7 @@ public class SocketManager : MonoBehaviour
         BinaryFormatter bf = new BinaryFormatter();
         using (MemoryStream ms = new MemoryStream(data))
         {
+            ms.Position = 0;
             object obj = bf.Deserialize(ms);
             return (T)obj;
         }

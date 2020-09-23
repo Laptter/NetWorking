@@ -226,15 +226,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9efbf95d0a3b7324a9a23709e7c88593, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bInitTcpServer: 1
-  tcpServerIp: 192.168.1.11
+  bInitTcpServer: 0
+  tcpServerIp: 192.168.1.101
   tcpServerPort: 8001
-  bInitUdpServer: 0
-  udpServerIp: 192.168.1.11
+  bInitUdpServer: 1
+  udpServerIp: 192.168.1.101
   udpServerPort: 8003
   bInitTcpClient: 0
   tcpClientIp: 192.168.1.11
-  tcpClientPort: 8004
+  tcpClientPort: 8001
   bInitUdpClient: 0
   udpClientIp: 192.168.1.11
   udpClientPort: 8005
