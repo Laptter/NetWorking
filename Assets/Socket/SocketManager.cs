@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
 using UnityEngine;
@@ -34,7 +36,10 @@ public class SocketManager : MonoBehaviour
     public int udpClientPort;
 
 
-    private List<Server> servers = new List<Server>();
+    Server tcpServer;
+    Server udpServer;
+    Client tcpClient;
+    Client udpClient;
 
     private void OnEnable()
     {
@@ -53,7 +58,7 @@ public class SocketManager : MonoBehaviour
             InitTcpClient();
         }
 
-        if (bInitTcpServer)
+        if (bInitUdpClient)
         {
             InitUdpClient();
         }
@@ -63,35 +68,66 @@ public class SocketManager : MonoBehaviour
 
     public void InitTcpServer()
     {
-        Server tcpServer = new Server(tcpServerIp, tcpServerPort, ProtocolType.Tcp);
+        tcpServer = new Server(tcpServerIp, tcpServerPort, ProtocolType.Tcp);
         tcpServer.Initialize(ReciveBytes);
-        servers.Add(tcpServer);
     }
 
 
     private void ReciveBytes(byte[] bytes,int length)
     {
-        
+        if (length > 0)
+        {
+            Array.Resize(ref bytes, length);
+            DataType data = FromByteArray<DataType>(bytes);
+        }
     }
 
     public void InitUdpServer()
-    { 
-
+    {
+        udpServer = new Server(udpServerIp, udpServerPort, ProtocolType.Udp);
+        udpServer.Initialize(ReciveBytes);
     }
 
     public void InitUdpClient()
-    { 
-
+    {
+        udpClient = new Client(udpClientIp, udpClientPort, ProtocolType.Udp);
     }
 
     public void InitTcpClient()
     {
-        Client tcpClient = new Client(tcpClientIp,tcpClientPort, ProtocolType.Tcp);
-        tcpClient.SendToTarget("dd", tcpClientIp, tcpClientPort, Encoding.UTF8);
+        tcpClient = new Client(tcpClientIp,tcpClientPort, ProtocolType.Tcp);
     }
 
     private void OnDisable()
     {
-        servers.ForEach(s => s.OnDisable());
+        tcpServer?.OnDisable();
+        udpServer?.OnDisable();
+        tcpClient?.OnDisable();
+        udpClient?.OnDisable();
+    }
+
+
+    public byte[] ToByteArray<T>(T obj)
+    {
+        if (obj == null)
+            return null;
+        BinaryFormatter bf = new BinaryFormatter();
+        using (MemoryStream ms = new MemoryStream())
+        {
+            bf.Serialize(ms, obj);
+            return ms.ToArray();
+        }
+    }
+
+    public T FromByteArray<T>(byte[] data)
+    {
+        if (data == null)
+            return default(T);
+        BinaryFormatter bf = new BinaryFormatter();
+        using (MemoryStream ms = new MemoryStream(data))
+        {
+            object obj = bf.Deserialize(ms);
+            return (T)obj;
+        }
     }
 }

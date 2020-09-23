@@ -25,8 +25,6 @@ public class SocketManagerEditor : Editor
         }
 
 
-
-
         //Udp Server
         EditorGUI.BeginChangeCheck();
         bool bInitUdpServer = EditorGUILayout.Toggle("UdpServer", socketManager.bInitUdpServer);

@@ -63,17 +63,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Network\Demo\Scripts\SendMessage.cs" />
-    <Compile Include="Assets\Network\Demo\Scripts\ShowReceiveMessage.cs" />
-    <Compile Include="Assets\Network\NetConfig\Scripts\AcceptNetWorkMessage.cs" />
-    <Compile Include="Assets\Network\NetConfig\Scripts\AcceptSocket.cs" />
-    <Compile Include="Assets\Network\NetConfig\Scripts\NetType.cs" />
-    <Compile Include="Assets\Network\NetConfig\Scripts\NetworkFunction.cs" />
-    <Compile Include="Assets\Network\NetConfig\Scripts\SendNetWorkMessage.cs" />
-    <Compile Include="Assets\Network\NetConfig\Scripts\SendSocket.cs" />
-    <Compile Include="Assets\Network\NetConfig\Scripts\StringToByteArray.cs" />
-    <Compile Include="Assets\Network\NetConfig\Scripts\XMLConfig\XMLConfig.cs" />
     <Compile Include="Assets\Socket\Client.cs" />
+    <Compile Include="Assets\Socket\DataType.cs" />
     <Compile Include="Assets\Socket\Server.cs" />
     <Compile Include="Assets\Socket\SocketManager.cs" />
     <None Include="Assets\StreamingAssets\NetConfig.xml" />

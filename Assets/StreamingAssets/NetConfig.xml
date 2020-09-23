@@ -1,10 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Config>
-  <RemoteIp>192.168.1.111</RemoteIp>
-  <RemotePort>8001</RemotePort>
- 
-  <LocalIp>192.168.1.111</LocalIp>
-  <LocalPort>8001</LocalPort>
+  <RemoteIp>192.168.1.135</RemoteIp>
+  <RemotePort>7345</RemotePort>
+  <RemotePort2>7654</RemotePort2>
+  <LocalIp>192.168.1.48</LocalIp>
+  <LocalPort>4567</LocalPort>
   <AutoLocalIp>true</AutoLocalIp>
 
-  </Config>
+  <Open>Open Light</Open>
+  <Close>Close Light</Close>
+</Config>
