@@ -84,6 +84,7 @@ public class SocketManagerEditor : Editor
             Undo.RecordObject(socketManager, "IP");
             EditorUtility.SetDirty(socketManager);
             originIp = ip;
+            socketManager.SaveToFile();
         }
 
         EditorGUI.BeginChangeCheck();
@@ -93,7 +94,10 @@ public class SocketManagerEditor : Editor
             Undo.RecordObject(socketManager, "Port");
             EditorUtility.SetDirty(socketManager);
             originPort = int.Parse(port);
+            socketManager.SaveToFile();
         }
+        
     }
 
+    
 }

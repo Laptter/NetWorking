@@ -3,68 +3,72 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class Client 
 {
+    
     Socket sendScoket;
-    public IPAddress default_ip;
-    public int default_port;
+    public IPAddress targetIp;
+    public int targetPort;
 
-    public Client(string defaultIp,int defaultPort, ProtocolType type)
+    public Client(string targetIp,int targetPort, SocketType socketType, ProtocolType protocolType)
     {
-        this.default_ip = IPAddress.Parse(defaultIp);
-        this.default_port = defaultPort;
-        sendScoket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, type);
+        this.targetIp = IPAddress.Parse(targetIp);
+        this.targetPort = targetPort;
+        sendScoket = new Socket(AddressFamily.InterNetwork, socketType, protocolType);
     }
 
-    public void SendToAll(string message, Encoding encode)
+    public void SendToDefault(string message)
     {
-        EndPoint sendPoint = new IPEndPoint(default_ip, default_port);   //目标节点
-        sendScoket.Connect(sendPoint);
-        byte[] data = encode.GetBytes(message);
+        EndPoint sendPoint = new IPEndPoint(targetIp, targetPort);   //目标节点
+        if(!sendScoket.Connected)
+            sendScoket.Connect(sendPoint);
+        byte[] data = Encoding.ASCII.GetBytes(message);
         sendScoket.SendTo(data, sendPoint);
-    }
-    public void SendToOthers(string message, Encoding encode)
-    {
-        EndPoint sendPoint = new IPEndPoint(default_ip, default_port);   //目标节点
-        sendScoket.Connect(sendPoint);
-        byte[] data = encode.GetBytes(message);
-        sendScoket.SendTo(data, sendPoint);
+        
     }
 
-    public void SendToTarget(string message, string ip, int port, Encoding encode)
+    public void SendToDefault(byte[] bytes)
     {
+        EndPoint sendPoint = new IPEndPoint(targetIp, targetPort);   //目标节点
+        if (!sendScoket.Connected)
+            sendScoket.Connect(sendPoint);
+        sendScoket.SendTo(bytes, sendPoint);
+        
+    }
+
+
+    public void SendToTarget(string message, string ip, int port)
+    {
+        
         EndPoint sendPoint = new IPEndPoint(IPAddress.Parse(ip), port);   //目标节点
-        sendScoket.Connect(sendPoint);
-        byte[] data = encode.GetBytes(message);
+        if (!sendScoket.Connected)
+            sendScoket.Connect(sendPoint);
+        byte[] data = Encoding.ASCII.GetBytes(message);
         sendScoket.SendTo(data, sendPoint);
+        
     }
 
-    public void SendToAll(byte[] bytes)
-    {
-        EndPoint sendPoint = new IPEndPoint(default_ip, default_port);   //目标节点
-        sendScoket.Connect(sendPoint);
-        sendScoket.SendTo(bytes, sendPoint);
-    }
-    public void SendToOthers(byte[] bytes, string ip, int port)
-    {
-        EndPoint sendPoint = new IPEndPoint(default_ip, default_port);   //目标节点
-        sendScoket.Connect(sendPoint);
-        sendScoket.SendTo(bytes, sendPoint);
-    }
+ 
 
     public void SendToTarget(byte[] bytes, string ip, int port)
     {
-        //如果每次send一次都connetc一次，是不合理的
         EndPoint sendPoint = new IPEndPoint(IPAddress.Parse(ip), port);   //目标节点
-        sendScoket.Connect(sendPoint);
+        if (!sendScoket.Connected)
+            sendScoket.Connect(sendPoint);
         sendScoket.SendTo(bytes, sendPoint);
+       
     }
 
     public void OnDisable()
     {
-        sendScoket.Shutdown(SocketShutdown.Both);
-        sendScoket.Close();
+        if (sendScoket != null && sendScoket.Connected)
+        {
+            sendScoket.Shutdown(SocketShutdown.Both);
+            
+            sendScoket.Close();
+        }
     }
 }

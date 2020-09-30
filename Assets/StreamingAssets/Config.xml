@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Config>
+  <autoLocalIp>true</autoLocalIp>
+  <!--tcpServer ip port-->
+  <tcpServerIp>192.168.1.11</tcpServerIp>
+  <tcpServerPort>8004</tcpServerPort>
+  <!--udpServer ip port-->
+  <udpServerIp>192.168.1.11</udpServerIp>
+  <udpServerPort>8002</udpServerPort>
+  <!--tcpClient ip port-->
+  <tcpClientIp>192.168.1.11</tcpClientIp>
+  <tcpClientPort>8001</tcpClientPort>
+  <!--udpClient ip port-->
+  <udpClientIp>192.168.1.11</udpClientIp>
+  <udpClientPort>8002</udpClientPort>
+</Config>

@@ -70,7 +70,6 @@ public class Server
         while (flag)
         {
             Socket client = acceptSocket.Accept();
-            Debug.Log(client.RemoteEndPoint.ToString());
             Thread t = new Thread(() => ReceiveMessage(client, call));
             ThreadDic.Add(client.RemoteEndPoint.ToString(), t);
             SocketDic.Add(client.RemoteEndPoint.ToString(), client);
@@ -82,14 +81,13 @@ public class Server
 
     private void UdpRecive(Action<byte[], int> call)
     {
-        while (true)
+        while (flag)
         {
             EndPoint remoteEndpoint = new IPEndPoint(IPAddress.Any, 0);
             byte[] data = new byte[2048];
             int length = -1;
             try
             {
-                Debug.Log(remoteEndpoint);
                 length = acceptSocket.ReceiveFrom(data,ref remoteEndpoint);
             }
             catch (SocketException se)
@@ -104,10 +102,7 @@ public class Server
             {
                 Debug.Log(e);
             }
-
-            //string message = Encoding.ASCII.GetString(data, 0, length);
             call(data,length);
-            //Debug.Log("接收到UDP消息：" + message + " from " + remoteEndpoint);
         }
     }
 
@@ -161,6 +156,7 @@ public class Server
             SocketDic.Remove(key);
             client.Shutdown(SocketShutdown.Both);
             client.Close();
+            Debug.Log("1");
             Thread t = ThreadDic[key];
             ThreadDic.Remove(key);
             t.Abort();
@@ -175,10 +171,10 @@ public class Server
             if (socket.Value != null && socket.Value.Connected)
             {
                 socket.Value.Shutdown(SocketShutdown.Both);
-                System.Threading.Thread.Sleep(10);
                 socket.Value.Close();
             }
         }
+
 
 
         foreach (var thread in ThreadDic)

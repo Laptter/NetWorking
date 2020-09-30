@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.CompilerServices;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
-using System.Threading;
+using System.Xml.Linq;
 using UnityEngine;
+[DisallowMultipleComponent]
 public class SocketManager : MonoBehaviour
 {
     public bool bInitTcpServer;
@@ -35,17 +32,26 @@ public class SocketManager : MonoBehaviour
     [SerializeField]
     public int udpClientPort;
 
+    public Queue<string> TcpMessageQueue => tcpMessageQueue;
+    private Queue<string> tcpMessageQueue = new Queue<string>();
+    public Queue<string> UdpMessageQueue => udpMessageQueue;
+    private Queue<string> udpMessageQueue = new Queue<string>();
+
 
     Server tcpServer;
     Server udpServer;
     Client tcpClient;
     Client udpClient;
 
+    private void Awake()
+    {
+        InitilizeConfig();
+    }
+
     private void OnEnable()
     {
         if (bInitTcpServer)
         {
-            //over
             InitTcpServer();
         }
 
@@ -63,40 +69,138 @@ public class SocketManager : MonoBehaviour
         {
             InitUdpClient();
         }
-        
+
+    }
+
+
+    private void InitilizeConfig()
+    {
+
+        var fullPath = System.IO.Path.Combine(Application.streamingAssetsPath, "Config.xml");
+        XElement root = XElement.Load(fullPath);
+
+        bool autoLocalIp = bool.Parse(root.Element("autoLocalIp").Value);
+
+        if (autoLocalIp)
+            tcpServerIp = GetLocalIPAddress();
+        else
+            tcpServerIp = root.Element("tcpServerIp").Value;
+        tcpServerPort = int.Parse(root.Element("tcpServerPort").Value);
+
+
+
+        if (autoLocalIp)
+            udpServerIp = GetLocalIPAddress();
+        else
+            udpServerIp = root.Element("udpServerIp").Value;
+        udpServerPort = int.Parse(root.Element("udpServerPort").Value);
+
+        tcpClientIp = root.Element("tcpClientIp").Value;
+        tcpClientPort = int.Parse(root.Element("tcpClientPort").Value);
+
+        udpClientIp = root.Element("udpClientIp").Value;
+        udpClientPort = int.Parse(root.Element("udpClientPort").Value);
     }
 
 
     public void InitTcpServer()
     {
-        tcpServer = new Server(tcpServerIp, tcpServerPort,  SocketType.Stream,ProtocolType.Tcp);
-        tcpServer.Initialize(ReciveBytes);
+        tcpServer = new Server(tcpServerIp, tcpServerPort, SocketType.Stream, ProtocolType.Tcp);
+        tcpServer.Initialize(ReciveTcpBytes);
     }
 
 
-    private void ReciveBytes(byte[] bytes,int length)
+    private void ReciveTcpBytes(byte[] bytes, int length)
     {
         if (length > 0)
         {
             Array.Resize(ref bytes, length);
-            Debug.Log( System.Text.Encoding.UTF8.GetString(bytes).TrimEnd('\0'));
+            var message = System.Text.Encoding.ASCII.GetString(bytes).TrimEnd('\0');
+            tcpMessageQueue.Enqueue(message);
+            Debug.Log("tcp recive--"+message);
         }
     }
 
-    public void InitUdpServer()
+    private void ReciveUdpBytes(byte[] bytes, int length)
+    {
+        if (length > 0)
+        {
+            Array.Resize(ref bytes, length);
+            var message = System.Text.Encoding.ASCII.GetString(bytes).TrimEnd('\0');
+            udpMessageQueue.Enqueue(message);
+            Debug.Log("udp recive--" + message);
+        }
+    }
+
+
+    private void InitUdpServer()
     {
         udpServer = new Server(udpServerIp, udpServerPort, SocketType.Dgram, ProtocolType.Udp);
-        udpServer.Initialize(ReciveBytes);
+        udpServer.Initialize(ReciveUdpBytes);
     }
 
-    public void InitUdpClient()
+
+    public void SendToDefault(string message, ProtocolType type = ProtocolType.Udp)
     {
-        udpClient = new Client(udpClientIp, udpClientPort, ProtocolType.Udp);
+        switch (type)
+        {
+            case ProtocolType.Udp:
+                udpClient.SendToDefault(message);
+                break;
+            case ProtocolType.Tcp:
+                tcpClient.SendToDefault(message);
+                break;
+        }
+    }
+    public void SendToDefault(byte[] bytes, ProtocolType type = ProtocolType.Udp)
+    {
+        switch (type)
+        {
+            case ProtocolType.Udp:
+                udpClient.SendToDefault(bytes);
+                break;
+            case ProtocolType.Tcp:
+                tcpClient.SendToDefault(bytes);
+                break;
+        }
+    }
+    public void SendToTarget(string message, string ip, int port, ProtocolType type = ProtocolType.Udp)
+    {
+        switch (type)
+        {
+            case ProtocolType.Udp:
+                udpClient.SendToTarget(message, ip, port);
+                break;
+            case ProtocolType.Tcp:
+                tcpClient.SendToTarget(message, ip, port);
+                break;
+        }
     }
 
-    public void InitTcpClient()
+ 
+    private void SendToTarget(byte[] bytes, string ip, int port, ProtocolType type = ProtocolType.Udp)
     {
-        tcpClient = new Client(tcpClientIp,tcpClientPort, ProtocolType.Tcp);
+        switch (type)
+        {
+            case ProtocolType.Udp:
+                udpClient.SendToTarget(bytes, ip, port);
+                break;
+            case ProtocolType.Tcp:
+                tcpClient.SendToTarget(bytes, ip, port);
+                break;
+        }
+    }
+
+
+
+    private void InitUdpClient()
+    {
+        udpClient = new Client(udpClientIp, udpClientPort, SocketType.Dgram, ProtocolType.Udp);
+    }
+
+    private void InitTcpClient()
+    {
+        tcpClient = new Client(tcpClientIp, tcpClientPort, SocketType.Stream, ProtocolType.Tcp);
     }
 
     private void OnDisable()
@@ -107,30 +211,41 @@ public class SocketManager : MonoBehaviour
         udpClient?.OnDisable();
     }
 
-
-    public byte[] ToByteArray<T>(T obj)
+    public static string GetLocalIPAddress()
     {
-        if (obj == null)
-            return null;
-        BinaryFormatter bf = new BinaryFormatter();
-        using (MemoryStream ms = new MemoryStream())
+        var host = Dns.GetHostEntry(Dns.GetHostName());
+        foreach (var ip in host.AddressList)
         {
-            ms.Position = 0;
-            bf.Serialize(ms, obj);
-            return ms.ToArray();
+            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            {
+                return ip.ToString();
+            }
         }
+        throw new Exception("No network adapters with an IPv4 address in the system!");
     }
 
-    public T FromByteArray<T>(byte[] data)
+
+    public void  SaveToFile()
     {
-        if (data == null)
-            return default(T);
-        BinaryFormatter bf = new BinaryFormatter();
-        using (MemoryStream ms = new MemoryStream(data))
-        {
-            ms.Position = 0;
-            object obj = bf.Deserialize(ms);
-            return (T)obj;
-        }
+
+        var fullPath = System.IO.Path.Combine(Application.streamingAssetsPath, "Config.xml");
+        XElement root = XElement.Load(fullPath);       
+
+        root.Element("tcpServerIp").Value = tcpServerIp;
+        root.Element("tcpServerPort").Value = tcpServerPort.ToString();
+
+
+        root.Element("udpServerIp").Value = udpServerIp;
+        root.Element("udpServerPort").Value = udpServerPort.ToString();
+
+        root.Element("tcpClientIp").Value = tcpClientIp;
+        root.Element("tcpClientPort").Value = tcpClientPort.ToString();
+
+        root.Element("udpClientIp").Value = udpClientIp;
+        root.Element("udpClientPort").Value = udpClientPort.ToString();
+
+        root.Save(fullPath);
+
+        
     }
 }

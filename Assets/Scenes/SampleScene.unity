@@ -132,6 +132,7 @@ GameObject:
   - component: {fileID: 705507995}
   - component: {fileID: 705507994}
   - component: {fileID: 705507996}
+  - component: {fileID: 705507997}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -226,18 +227,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9efbf95d0a3b7324a9a23709e7c88593, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bInitTcpServer: 0
-  tcpServerIp: 192.168.1.101
-  tcpServerPort: 8001
-  bInitUdpServer: 1
-  udpServerIp: 192.168.1.101
-  udpServerPort: 8003
+  bInitTcpServer: 1
+  tcpServerIp: 192.168.1.11
+  tcpServerPort: 8004
+  bInitUdpServer: 0
+  udpServerIp: 192.168.1.11
+  udpServerPort: 8002
   bInitTcpClient: 0
   tcpClientIp: 192.168.1.11
   tcpClientPort: 8001
   bInitUdpClient: 0
   udpClientIp: 192.168.1.11
-  udpClientPort: 8005
+  udpClientPort: 8002
+--- !u!114 &705507997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 705507993}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc28045f386c94e4793af09f4dc11f76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
